@@ -185,11 +185,19 @@ proc is_leaf {t n} {
          set father_y [T get [T parent $node] y]
 
          set this_x [expr $father_x+$OFFSET_X]
-         set SCALE  [expr 1.0/$n]
-         set this_y [expr $father_y+$OFFSET_Y*$SCALE*[T index $node]]
+         #set SCALE  [expr 1.0/$n]
+         #set this_y [expr $father_y+$OFFSET_Y*$SCALE*[T index $node]]
+         if {[T previous $node] ne ""} {
+            set previous_Y [T get [T previous $node] y]
+            set offset_Y   [expr ([llength [T children -all [T previous $node]]]+1)*$OFFSET_Y]
+         } else {
+            set previous_Y [T get [T parent $node] y]
+            set offset_Y [expr 0]
+         }
+         set this_y [expr $previous_Y+$offset_Y]
       } else {
-         T set root x 0.1
-         T set root y 0.1
+         T set root x 1.1
+         T set root y 1.1
       }
       if {$node ne "root"} {
          puts "node=$node"
@@ -200,6 +208,10 @@ proc is_leaf {t n} {
          T set $node y $this_y
          draw_line $vec
          #draw_mark [list $this_x $this_y] "O"
+         if {0} {
          draw_mark [list $this_x $this_y] $node
+        } else {
+         draw_mark [list $this_x $this_y] "."
+        }
       }
    }
