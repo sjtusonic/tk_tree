@@ -3,7 +3,7 @@ source ../small_lib/include.tcl
 source Widget_Attribute.proc.tk.tcl
 
 set OFFSET_X 1.0
-set OFFSET_Y 2.0
+set OFFSET_Y 0.2
 #return
 package require Tk
 #button .hello -text Hello \
@@ -24,7 +24,7 @@ frame $w.frame
 pack $w.frame -side top -fill both -expand yes
 
 
-canvas $c -scrollregion {0c 0c 30c 24c} -width 15c -height 10c \
+canvas $c -scrollregion {0c 0c 300c 2400c} -width 150c -height 100c \
    -relief sunken -borderwidth 2 \
    -xscrollcommand "$w.frame.hscroll set" \
    -yscrollcommand "$w.frame.vscroll set"
@@ -72,7 +72,7 @@ if {[winfo depth $c] > 1} {
 
 #$c create line 0c 0c 4c 4c -arrow last -tags item
 #$c create line 0c 0c 4c 4c -arrow none -tags item
-$c create text 4c 4c -text ^ -anchor n ;# text
+#$c create text 4c 4c -text ^ -anchor n ;# text
 
 proc draw_line {vec {color black} {tag item} {arrow none}} {
    global c
@@ -89,6 +89,12 @@ set vec {3 1 7 3}
 
 ### Tree
 package require struct
+
+set LOAD_EXISTING_TREE 1
+set SAVE_TREE 0
+if {$LOAD_EXISTING_TREE} {
+source T.save
+} else {
 catch {T destroy}
 ::struct::tree T
 
@@ -112,28 +118,45 @@ T insert n7_2 end n7_2_2
 
 T insert n7_2_1 end n7_2_1_1
 T insert n7_2_1 end n7_2_1_2
+}
+
+# SAVE T
+if {$SAVE_TREE} {
+set fp [open T.save w]
+puts $fp "catch {T destroy}"
+puts $fp {::struct::tree T}
+puts $fp "T deserialize \{[T serialize]\}"
+close $fp
+}
 #
 proc dump_full_structure {} {
    global T
+   set fp [open T.tk.full_structure w]
    T walk root -order pre -type dfs node {
       set n [T depth $node]
       set n1 $n
       while {$n1 >0} {
+         puts -nonewline $fp "   ";
          puts -nonewline "   ";
          incr n1 -1
       }
       #puts [T get $node ]
       #puts "$node:\tlevel=$n"
-      puts [format "lv%s:%s" \
+      puts $fp [format "lv%s:%s" \
       $n\
       $node]
       #puts "node=$node;father=[T parent $node]"
       #puts "node=$node;child =[T children $node]"
    }
+   close $fp
 }
 
 dump_full_structure 
 
+proc is_leaf {t n} {
+   if {![$t keyexists $n volume]} {return 0}
+   return [$t isleaf $n]
+}
 #
 
    T walk root -order pre -type dfs node {
